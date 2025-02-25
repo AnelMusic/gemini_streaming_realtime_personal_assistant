@@ -10,8 +10,6 @@ This code implements a Retrieval-Augmented Generation (RAG) system that allows u
 3. Query the documents using natural language
 4. Get contextually relevant responses based on the document content
 
-Let me break down the entire system component by component:
-
 ## Core Technologies Used
 
 ### 1. Google Gemini AI
