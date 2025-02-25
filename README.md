@@ -1,5 +1,9 @@
 # Comprehensive Explanation of RAG-Based Document Query System
 
+
+https://github.com/user-attachments/assets/3de495e0-61c2-4d4a-b3dc-f19d7730589f
+
+
 This code implements a Retrieval-Augmented Generation (RAG) system that allows users to:
 1. Upload and process PDF documents
 2. Index the document content
