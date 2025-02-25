@@ -86,25 +86,10 @@
         }
 
         .app-container {
-            display: flex;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
             gap: 24px;
             justify-content: center;
-        }
-
-        .left-section {
-            flex: 1;
-            min-width: 300px;
-            max-width: 650px;
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        .right-section {
-            flex: 1;
-            min-width: 300px;
-            max-width: 450px;
         }
 
         .card {
@@ -113,6 +98,13 @@
             box-shadow: var(--box-shadow);
             padding: 24px;
             overflow: hidden;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-content {
+            flex: 1;
         }
 
         .controls-card {
@@ -125,6 +117,8 @@
             display: flex;
             gap: 16px;
             align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
         }
 
         .control-btn {
@@ -202,7 +196,7 @@
         #pdf-container {
             margin-top: 20px;
             width: 100%;
-            height: 400px;
+            height: 800px;
             border-radius: var(--border-radius);
             overflow: hidden;
             display: none;
@@ -212,15 +206,17 @@
             width: 100%;
             height: 100%;
             border-radius: var(--border-radius);
+            display: block;
         }
 
         #chatLog {
-            height: 615px;
+            height: 500px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
             gap: 12px;
             padding-right: 8px;
+            flex: 1;
         }
 
         #chatLog::-webkit-scrollbar {
@@ -322,11 +318,7 @@
         /* Responsive adjustments */
         @media (max-width: 960px) {
             .app-container {
-                flex-direction: column;
-            }
-
-            .left-section, .right-section {
-                max-width: 100%;
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -349,12 +341,12 @@
     <main>
         <div class="app-container">
             <!-- Left Section: PDF Upload and Controls -->
-            <div class="left-section">
-                <div class="card controls-card">
-                    <div class="section-title">
-                        <i class="fas fa-sliders"></i>
-                        <span>Voice Controls</span>
-                    </div>
+            <div class="card controls-card">
+                <div class="section-title">
+                    <i class="fas fa-sliders"></i>
+                    <span>Voice Controls</span>
+                </div>
+                <div class="card-content">
                     <div class="voice-controls">
                         <div class="control-group">
                             <button id="startButton" class="control-btn">
@@ -389,14 +381,14 @@
             </div>
 
             <!-- Right Section: Chat -->
-            <div class="right-section">
-                <div class="card">
-                    <div class="chat-header">
-                        <div class="section-title">
-                            <i class="fas fa-comments"></i>
-                            <span>Conversation</span>
-                        </div>
+            <div class="card">
+                <div class="chat-header">
+                    <div class="section-title">
+                        <i class="fas fa-comments"></i>
+                        <span>Conversation</span>
                     </div>
+                </div>
+                <div class="card-content">
                     <div id="chatLog"></div>
                 </div>
             </div>
@@ -433,6 +425,9 @@
                     reader.onload = (e) => {
                         pdfPreview.setAttribute('src', e.target.result);
                         pdfContainer.style.display = 'block';
+                        
+                        // Adjust other elements when PDF is shown
+                        document.querySelector('.upload-section').style.marginBottom = '20px';
                         console.log('pdf rendered');
 
                         // Convert to base64 and send immediately
@@ -536,6 +531,8 @@
 
                 webSocket.send(JSON.stringify(payload));
                 console.log("PDF data sent immediately");
+                
+                // PDF uploaded
             } catch (err) {
                 console.error("Error sending PDF message:", err);
             }
@@ -679,6 +676,8 @@
 
                 interval = setInterval(recordChunk, 3000);
                 
+                // Recording started
+                
             } catch (err) {
                 console.error("Error accessing microphone:", err);
                 alert("Could not access microphone. Please check permissions.");
@@ -697,6 +696,8 @@
             }
 
             clearInterval(interval);
+            
+            // Recording stopped
         }
 
         function displayMessage(message, isUser = false) {
