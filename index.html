@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Live Demo</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --accent-primary: #7367f0;
+            --accent-secondary: #4834d4;
+            --accent-success: #28c76f;
+            --accent-danger: #ea5455;
+            --accent-warning: #ff9f43;
+            --border-radius: 12px;
+            --box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.3);
+            --transition: all 0.25s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            padding: 16px 24px;
+            background-color: var(--bg-secondary);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 32px 24px;
+        }
+
+        .app-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+        }
+
+        .left-section {
+            flex: 1;
+            min-width: 300px;
+            max-width: 650px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .right-section {
+            flex: 1;
+            min-width: 300px;
+            max-width: 450px;
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 24px;
+            overflow: hidden;
+        }
+
+        .controls-card {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .voice-controls {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+        }
+
+        .control-btn {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            background-color: var(--bg-tertiary);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        #startButton {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        }
+
+        #stopButton {
+            background-color: var(--bg-tertiary);
+            border: 1px solid #444;
+        }
+
+        .control-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .upload-section {
+            margin-top: 12px;
+        }
+
+        .upload-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            padding: 24px;
+            border: 2px dashed #444;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .upload-label:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .upload-icon {
+            font-size: 2rem;
+            color: var(--accent-primary);
+        }
+
+        #pdfInput {
+            display: none;
+        }
+
+        #pdf-container {
+            margin-top: 20px;
+            width: 100%;
+            height: 400px;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            display: none;
+        }
+
+        #pdfPreview {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--border-radius);
+        }
+
+        #chatLog {
+            height: 615px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-right: 8px;
+        }
+
+        #chatLog::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        #chatLog::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        #chatLog::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        #chatLog::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-primary);
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 14px;
+            max-width: 90%;
+            position: relative;
+            animation: fade-in 0.3s ease;
+            line-height: 1.5;
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .user-message {
+            background-color: var(--bg-tertiary);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .gemini-message {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            background-opacity: 0.1;
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            background-color: rgba(115, 103, 240, 0.15);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background-color: var(--bg-tertiary);
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .status-badge.connected {
+            background-color: rgba(40, 199, 111, 0.2);
+            color: var(--accent-success);
+        }
+
+        .upload-success {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background-color: rgba(40, 199, 111, 0.1);
+            border-radius: var(--border-radius);
+            margin-top: 16px;
+            border-left: 3px solid var(--accent-success);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--accent-primary);
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 960px) {
+            .app-container {
+                flex-direction: column;
+            }
+
+            .left-section, .right-section {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-robot"></i>
+                <span>Gemini Live Demo</span>
+            </div>
+            <div class="status-badge connected">
+                <i class="fas fa-circle"></i>
+                <span>Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="app-container">
+            <!-- Left Section: PDF Upload and Controls -->
+            <div class="left-section">
+                <div class="card controls-card">
+                    <div class="section-title">
+                        <i class="fas fa-sliders"></i>
+                        <span>Voice Controls</span>
+                    </div>
+                    <div class="voice-controls">
+                        <div class="control-group">
+                            <button id="startButton" class="control-btn">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                            <div class="control-label">Start</div>
+                        </div>
+                        <div class="control-group">
+                            <button id="stopButton" class="control-btn">
+                                <i class="fas fa-microphone-slash"></i>
+                            </button>
+                            <div class="control-label">Stop</div>
+                        </div>
+                    </div>
+
+                    <div class="upload-section">
+                        <div class="section-title">
+                            <i class="fas fa-file-pdf"></i>
+                            <span>PDF Upload</span>
+                        </div>
+                        <label for="pdfInput" class="upload-label">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <span>Drop your PDF here or click to browse</span>
+                        </label>
+                        <input type="file" id="pdfInput" accept="application/pdf">
+                    </div>
+
+                    <div id="pdf-container">
+                        <embed id="pdfPreview" type="application/pdf">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Section: Chat -->
+            <div class="right-section">
+                <div class="card">
+                    <div class="chat-header">
+                        <div class="section-title">
+                            <i class="fas fa-comments"></i>
+                            <span>Conversation</span>
+                        </div>
+                    </div>
+                    <div id="chatLog"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script defer>
+        const URL = "ws://localhost:9084";
+        let currentFrameB64;
+        let webSocket = null;
+        let audioContext = null;
+        let mediaRecorder = null;
+        let processor = null;
+        let pcmData = [];
+        let interval = null;
+        let initialized = false;
+        let audioInputContext;
+        let workletNode;
+        const statusBadge = document.querySelector('.status-badge');
+
+        // Add PDF handling
+        const pdfInput = document.getElementById('pdfInput');
+        const pdfPreview = document.getElementById('pdfPreview');
+        const pdfContainer = document.getElementById('pdf-container');
+
+        window.addEventListener("load", async () => {
+            pdfInput.addEventListener('change', async (event) => {
+                console.log("pdfInput change event detected!");
+                const file = event.target.files[0];
+
+                if (file && file.type === 'application/pdf') {
+                    const reader = new FileReader();
+
+                    reader.onload = (e) => {
+                        pdfPreview.setAttribute('src', e.target.result);
+                        pdfContainer.style.display = 'block';
+                        console.log('pdf rendered');
+
+                        // Convert to base64 and send immediately
+                        const base64Reader = new FileReader();
+                        base64Reader.onload = function (e) {
+                            try {
+                                const base64PDF = e.target.result.split(',')[1];
+                                sendPDFMessage(base64PDF, file.name);
+                            }
+                            catch (err) {
+                                console.error("error processing pdf file", err)
+                            }
+
+                        };
+                        base64Reader.onerror = (err) => {
+                            console.error("error reading pdf file", err);
+                        }
+                        base64Reader.readAsDataURL(file);
+                    };
+                    reader.readAsDataURL(file);
+
+
+                } else {
+                    alert('Please select a valid PDF file.');
+                    pdfContainer.style.display = 'none';
+                    pdfInput.value = ""; // Clear the file input
+                    pdfPreview.removeAttribute('src');
+                    console.warn("no pdf file detected");
+                }
+
+            });
+            await initializeAudioContext();
+            connect();
+        });
+
+
+        function connect() {
+            console.log("connecting: ", URL);
+            
+            // Update status badge to show connecting
+            statusBadge.classList.remove('connected');
+            statusBadge.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i><span>Connecting...</span>';
+
+            webSocket = new WebSocket(URL);
+
+            webSocket.onclose = (event) => {
+                console.log("websocket closed: ", event);
+                statusBadge.classList.remove('connected');
+                statusBadge.innerHTML = '<i class="fas fa-times-circle"></i><span>Disconnected</span>';
+                statusBadge.style.backgroundColor = "rgba(234, 84, 85, 0.2)";
+                statusBadge.style.color = "var(--accent-danger)";
+                alert("Connection closed");
+            };
+
+            webSocket.onerror = (event) => {
+                console.log("websocket error: ", event);
+                statusBadge.classList.remove('connected');
+                statusBadge.innerHTML = '<i class="fas fa-exclamation-circle"></i><span>Error</span>';
+                statusBadge.style.backgroundColor = "rgba(234, 84, 85, 0.2)";
+                statusBadge.style.color = "var(--accent-danger)";
+            };
+
+            webSocket.onopen = (event) => {
+                console.log("websocket open: ", event);
+                statusBadge.classList.add('connected');
+                statusBadge.innerHTML = '<i class="fas fa-circle"></i><span>Connected</span>';
+                sendInitialSetupMessage();
+            };
+
+            webSocket.onmessage = receiveMessage;
+        }
+
+        function sendInitialSetupMessage() {
+
+            console.log("sending setup message");
+            setup_client_message = {
+                setup: {
+                    generation_config: { response_modalities: ["AUDIO"] },
+                },
+            };
+
+            webSocket.send(JSON.stringify(setup_client_message));
+        }
+
+        function sendPDFMessage(base64PDF, filename) {
+            try {
+                if (webSocket == null) {
+                    console.log("websocket not initialized");
+                    return;
+                }
+
+                const payload = {
+                    realtime_input: {
+                        media_chunks: [{
+                            mime_type: "application/pdf",
+                            data: base64PDF,
+                            filename: filename
+                        }]
+                    },
+                };
+
+                webSocket.send(JSON.stringify(payload));
+                console.log("PDF data sent immediately");
+            } catch (err) {
+                console.error("Error sending PDF message:", err);
+            }
+        }
+
+        function sendVoiceMessage(b64PCM) {
+            try {
+                if (webSocket == null) {
+                    console.log("websocket not initialized");
+                    return;
+                }
+
+                payload = {
+                    realtime_input: {
+                        media_chunks: [{
+                            mime_type: "audio/pcm",
+                            data: b64PCM,
+                        }]
+                    },
+                };
+
+                webSocket.send(JSON.stringify(payload));
+                console.log("sent payload with audio data");
+            }
+            catch (err) {
+                console.error("Error sending audio message:", err);
+            }
+
+        }
+
+        function receiveMessage(event) {
+            try {
+                const messageData = JSON.parse(event.data);
+                const response = new Response(messageData);
+
+                if (response.text) {
+                    displayMessage("GEMINI: " + response.text, false);
+                }
+                if (response.audioData) {
+                    injestAudioChuckToPlay(response.audioData);
+                }
+            }
+            catch (err) {
+                console.error("Error receiving message:", err);
+            }
+        }
+
+        async function initializeAudioContext() {
+            if (initialized) return;
+
+            audioInputContext = new (window.AudioContext ||
+                window.webkitAudioContext)({
+                sampleRate: 24000
+            });
+            await audioInputContext.audioWorklet.addModule("pcm-processor.js");
+            workletNode = new AudioWorkletNode(audioInputContext, "pcm-processor");
+            workletNode.connect(audioInputContext.destination);
+            initialized = true;
+        }
+
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        function convertPCM16LEToFloat32(pcmData) {
+            const inputArray = new Int16Array(pcmData);
+            const float32Array = new Float32Array(inputArray.length);
+
+            for (let i = 0; i < inputArray.length; i++) {
+                float32Array[i] = inputArray[i] / 32768;
+            }
+
+            return float32Array;
+        }
+
+        async function injestAudioChuckToPlay(base64AudioChunk) {
+            try {
+                if (audioInputContext.state === "suspended") {
+                    await audioInputContext.resume();
+                }
+                const arrayBuffer = base64ToArrayBuffer(base64AudioChunk);
+                const float32Data = convertPCM16LEToFloat32(arrayBuffer);
+
+                workletNode.port.postMessage(float32Data);
+            }
+            catch (error) {
+                console.error("Error processing audio chunk:", error);
+            }
+        }
+
+        function recordChunk() {
+            const buffer = new ArrayBuffer(pcmData.length * 2);
+            const view = new DataView(buffer);
+            pcmData.forEach((value, index) => {
+                view.setInt16(index * 2, value, true);
+            });
+
+            const base64 = btoa(
+                String.fromCharCode.apply(null, new Uint8Array(buffer))
+            );
+
+            sendVoiceMessage(base64);
+            pcmData = [];
+        }
+
+        async function startAudioInput() {
+            // Visual feedback
+            document.getElementById('startButton').style.boxShadow = '0 0 0 3px rgba(115, 103, 240, 0.5)';
+            
+            audioContext = new AudioContext({
+                sampleRate: 16000,
+            });
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        channelCount: 1,
+                        sampleRate: 16000,
+                    },
+                });
+
+                const source = audioContext.createMediaStreamSource(stream);
+                processor = audioContext.createScriptProcessor(4096, 1, 1);
+
+                processor.onaudioprocess = (e) => {
+                    const inputData = e.inputBuffer.getChannelData(0);
+                    const pcm16 = new Int16Array(inputData.length);
+                    for (let i = 0; i < inputData.length; i++) {
+                        pcm16[i] = inputData[i] * 0x7fff;
+                    }
+                    pcmData.push(...pcm16);
+                };
+
+                source.connect(processor);
+                processor.connect(audioContext.destination);
+
+                interval = setInterval(recordChunk, 3000);
+                
+            } catch (err) {
+                console.error("Error accessing microphone:", err);
+                alert("Could not access microphone. Please check permissions.");
+            }
+        }
+
+        function stopAudioInput() {
+            // Reset visual feedback
+            document.getElementById('startButton').style.boxShadow = '';
+            
+            if (processor) {
+                processor.disconnect();
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+
+            clearInterval(interval);
+        }
+
+        function displayMessage(message, isUser = false) {
+            console.log(message);
+            addMessageToChat(message, isUser);
+        }
+
+        function addMessageToChat(text, isUser) {
+            const chatLog = document.getElementById("chatLog");
+            const messageEl = document.createElement("div");
+            
+            messageEl.classList.add("message");
+            messageEl.classList.add(isUser ? "user-message" : "gemini-message");
+            
+            // If it's a Gemini message, remove the "GEMINI: " prefix
+            const displayText = isUser ? text : text.replace("GEMINI: ", "");
+            messageEl.textContent = displayText;
+            
+            chatLog.appendChild(messageEl);
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+
+        startButton.addEventListener('click', startAudioInput);
+        stopButton.addEventListener('click', stopAudioInput);
+
+        class Response {
+            constructor(data) {
+                this.text = null;
+                this.audioData = null;
+                this.endOfTurn = null;
+
+                if (data.text) {
+                    this.text = data.text
+                }
+
+                if (data.audio) {
+                    this.audioData = data.audio;
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

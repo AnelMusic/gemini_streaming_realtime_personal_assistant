@@ -1,0 +1,6 @@
+google-genai
+llama-index
+llama-index-llms-gemini
+llama-index-embeddings-gemini
+websockets
+python-dotenv
