@@ -1,6 +1,3 @@
-##
-## pip install -u google-genai==0.5.0 llama-index==0.12.11 llama-index-llms-gemini==0.4.3 llama-index-embeddings-gemini==0.3.1 websockets
-##
 import asyncio
 import json
 import os
@@ -37,8 +34,12 @@ SERVER_HOST = "localhost"
 SERVER_PORT = 9084
 
 # Chunking parameters
-CHUNK_SIZE = 1024  # Size of each text chunk (in characters)
+CHUNK_SIZE = 512  # Size of each text chunk (in characters)
 CHUNK_OVERLAP = 200  # Overlap between chunks for context preservation
+
+# Track speech state
+audio_from_client_active = False
+audio_to_client_active = False
 
 # Setup directories
 Path(DOWNLOADS_DIR).mkdir(exist_ok=True)
@@ -403,18 +404,12 @@ async def process_model_turn(model_turn: Any, client_websocket: websockets.WebSo
         if hasattr(part, 'text') and part.text is not None:
             # Send text response to client
             response_text = part.text
-            print(f"\n========== MODEL RESPONSE ==========")
-            print(f"Response length: {len(response_text)} characters")
             print(f"Response: \"{response_text[:300]}{'...' if len(response_text) > 300 else ''}\"")
-            print(f"========== END RESPONSE ==========\n")
             
             await client_websocket.send(json.dumps({"text": response_text}))
         elif hasattr(part, 'inline_data') and part.inline_data is not None:
-            # Handle audio or other inline data
+            # Handle audio or other inline data - don't log anything here
             base64_audio = base64.b64encode(part.inline_data.data).decode('utf-8')
-            print("\n========== AUDIO RESPONSE ==========")
-            print(f"Audio data size: {len(part.inline_data.data)/1024:.2f} KB")
-            print(f"========== END AUDIO ==========\n")
             
             await client_websocket.send(json.dumps({
                 "audio": base64_audio,
@@ -429,20 +424,27 @@ async def send_to_gemini(client_websocket: websockets.WebSocketServerProtocol, s
         client_websocket: The websocket connection to the client
         session: The Gemini session
     """
+    global audio_from_client_active
+    
     try:
         print("Starting message forwarding from client to Gemini")
         async for message in client_websocket:
             try:
                 data = json.loads(message)
                 if "realtime_input" in data:
+                    # Check if there are any audio chunks in this message
+                    has_audio = any(chunk["mime_type"] == "audio/pcm" 
+                                   for chunk in data["realtime_input"]["media_chunks"])
+                    
+                    # Print only when audio starts (transition from no audio to having audio)
+                    if has_audio and not audio_from_client_active:
+                        print("\n========== AUDIO FROM CLIENT STARTED ==========")
+                        audio_from_client_active = True
+                    
+                    # Process all chunks
                     for chunk in data["realtime_input"]["media_chunks"]:
                         if chunk["mime_type"] == "audio/pcm":
-                            print("\n========== AUDIO INPUT ==========")
-                            print("Forwarding audio chunk to Gemini")
                             audio_data = chunk["data"]
-                            print(f"Audio chunk size: {len(audio_data)/1024:.2f} KB")
-                            print(f"========== END AUDIO INPUT ==========\n")
-                            
                             await session.send(input={
                                 "mime_type": "audio/pcm",
                                 "data": audio_data
@@ -453,8 +455,15 @@ async def send_to_gemini(client_websocket: websockets.WebSocketServerProtocol, s
                             print(f"Filename: {filename}")
                             print(f"========== PROCESSING PDF ==========\n")
                             
-                            await handle_pdf_upload(chunk, client_websocket)
+                            # Reset audio flag since we're processing a PDF
+                            audio_from_client_active = False
                             
+                            await handle_pdf_upload(chunk, client_websocket)
+                
+                # If we received a non-audio message, mark audio as inactive
+                elif audio_from_client_active:
+                    print("\n========== AUDIO FROM CLIENT ENDED ==========")
+                    audio_from_client_active = False
             except Exception as e:
                 print(f"Error sending to Gemini: {e}")
                 import traceback
@@ -474,11 +483,15 @@ async def receive_from_gemini(client_websocket: websockets.WebSocketServerProtoc
         client_websocket: The websocket connection to the client
         session: The Gemini session
     """
+    global audio_to_client_active
+    
     try:
         print("Starting response handling from Gemini to client")
         while True:
             try:
                 print("Awaiting response from Gemini")
+                audio_detected_in_turn = False
+                
                 async for response in session.receive():
                     # Handle tool calls
                     if response.server_content is None:
@@ -491,12 +504,36 @@ async def receive_from_gemini(client_websocket: websockets.WebSocketServerProtoc
 
                     # Process model turn if server_content is not None
                     if hasattr(response.server_content, 'model_turn') and response.server_content.model_turn:
-                        print("\n========== RECEIVED MODEL TURN ==========")
+                        # Only print "RECEIVED MODEL TURN" if we have meaningful content and not just audio continuation
+                        has_text = any(hasattr(part, 'text') and part.text 
+                                      for part in response.server_content.model_turn.parts)
+                        
+                        if has_text:
+                            print("\n========== RECEIVED MODEL TURN ==========")
+                                
+                        # Check for audio in this turn
+                        has_audio = any(hasattr(part, 'inline_data') and part.inline_data is not None 
+                                       for part in response.server_content.model_turn.parts)
+                                
+                        # Mark if we detected audio in this entire response stream
+                        if has_audio:
+                            audio_detected_in_turn = True
+                            
+                            # Print only when audio starts
+                            if not audio_to_client_active:
+                                print("\n========== AUDIO TO CLIENT STARTED ==========")
+                                audio_to_client_active = True
+                                
                         await process_model_turn(response.server_content.model_turn, client_websocket)
 
                     # Check if turn is complete
                     if response.server_content and hasattr(response.server_content, 'turn_complete') and response.server_content.turn_complete:
                         print('\n<Turn complete>\n')
+                        
+                        # If we've completed a turn and had no audio, reset the audio flag
+                        if not audio_detected_in_turn and audio_to_client_active:
+                            print("\n========== AUDIO TO CLIENT ENDED ==========")
+                            audio_to_client_active = False
                             
             except websockets.exceptions.ConnectionClosedOK:
                 print("Client connection closed normally (receive)")
